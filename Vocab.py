@@ -4,8 +4,7 @@ from io import open
 
 
 class Vocab:
-    def __init__(self, name):
-        self.name = name
+    def __init__(self):
         self.word_to_idx = dict()
         self.word_to_idx['<pad>'] = 0
         self.word_to_idx['<unk>'] = 1
@@ -38,23 +37,20 @@ def idx_from_sent(lang, sentence):
     return [lang.word_to_idx[word] for word in sentence.split(' ')]
 
 
-def tensor_from_sent(lang, sentence, max_seq_length, is_train, is_src):
-    indexes = idx_from_sent(lang, sentence)
-    if is_train:
-        if is_src:
-            indexes.insert(0, lang.word_to_idx['<sos>'])
-            indexes = pad(indexes, lang.word_to_idx['<pad>'], max_seq_length)
-        else:
-            indexes.append(lang.word_to_idx['<eos>'])
-            indexes = pad(indexes, lang.word_to_idx['<pad>'], max_seq_length)
-    else:
-        indexes.insert(0, lang.word_to_idx['<sos>'])
-    return indexes
+def tensors_from_lyrics(vocab, lyrics, max_seq_length):
+    src = []
+    trg = []
+    for sentence in lyrics:
+        src_indexes = idx_from_sent(vocab, sentence)
+        trg_indexes = idx_from_sent(vocab, sentence)
+        src_indexes.insert(0, vocab.word_to_idx['<sos>'])
+        src_indexes = pad(src_indexes, vocab.word_to_idx['<pad>'], max_seq_length)
+        trg_indexes.append(vocab.word_to_idx['<eos>'])
+        trg_indexes = pad(trg_indexes, vocab.word_to_idx['<pad>'], max_seq_length)
+        src.append(src_indexes)
+        trg.append(trg_indexes)
 
-
-def tensors_from_lyrics(lang, lyrics, max_seq_length, is_train, is_src):
-    src_tensors = [tensor_from_sent(lang, sentence, max_seq_length, is_train, is_src) for sentence in lyrics]
-    return src_tensors
+    return src, trg
 
 
 def unicode_to_ascii(s):
@@ -80,12 +76,11 @@ def filter_lyrics(lyrics, max_len):
     return [lyric for lyric in lyrics if filter_lyric(lyric, max_len)]
 
 
-def read_lyrics(lyrics):
+def read_lyrics():
     print("Reading lines...")
 
     # Read the file and split into lines
-    lines = open(f'/Users/michaelkoch/Documents/Academia/Projects/Transformer-Implementation/data/{lyrics}.txt',
-                 encoding='utf-8').read().strip().split('\n')
+    lines = open('data/lyrics.txt', encoding='utf-8').read().strip().split('\n')
 
     # print(lines)
 
@@ -93,7 +88,7 @@ def read_lyrics(lyrics):
 
     processed_lyrics = filter_lyrics(sentences, 20)
 
-    src = Vocab(lyrics)
+    src = Vocab()
 
     for lyric in processed_lyrics:
         src.add_sentence(lyric)

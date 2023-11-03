@@ -8,4 +8,9 @@ By: Michael Koch
 import Vocab
 
 if __name__ == "__main__":
-    Vocab.read_lyrics('lyrics-final')
+    v, lyrics = Vocab.read_lyrics()
+
+    src, trg = Vocab.tensors_from_lyrics(v, lyrics, 20)
+
+    print(src[1000])
+    print(trg[1000])
