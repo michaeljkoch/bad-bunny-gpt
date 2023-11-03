@@ -1,8 +1,6 @@
 import unicodedata
-import string
 import re
 from io import open
-import torch
 
 
 class Vocab:
