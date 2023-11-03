@@ -102,7 +102,3 @@ def read_lyrics(lyrics):
     print(src.n_words)
 
     return src, processed_lyrics
-
-
-if __name__ == "__main__":
-    read_lyrics('lyrics-final')
