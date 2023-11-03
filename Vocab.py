@@ -27,73 +27,50 @@ class Vocab:
         else:
             self.word_to_count[word] += 1
 
+    @staticmethod
+    def pad(seq, content, add_length):
+        seq.extend([content] * (add_length - len(seq)))
+        return seq
 
-def pad(seq, content, add_length):
-    seq.extend([content] * (add_length - len(seq)))
-    return seq
+    @staticmethod
+    def idx_from_sent(lang, sentence):
+        return [lang.word_to_idx[word] for word in sentence.split(' ')]
 
+    @staticmethod
+    def tensors_from_lyrics(vocab, lyrics, max_seq_length):
+        src = []
+        trg = []
+        for sentence in lyrics:
+            src_indexes = Vocab.idx_from_sent(vocab, sentence)
+            trg_indexes = Vocab.idx_from_sent(vocab, sentence)
+            src_indexes.insert(0, vocab.word_to_idx['<sos>'])
+            src_indexes = Vocab.pad(src_indexes, vocab.word_to_idx['<pad>'], max_seq_length)
+            trg_indexes.append(vocab.word_to_idx['<eos>'])
+            trg_indexes = Vocab.pad(trg_indexes, vocab.word_to_idx['<pad>'], max_seq_length)
+            src.append(src_indexes)
+            trg.append(trg_indexes)
 
-def idx_from_sent(lang, sentence):
-    return [lang.word_to_idx[word] for word in sentence.split(' ')]
+        return src, trg
 
+    @staticmethod
+    def unicode_to_ascii(s):
+        return ''.join(
+            c for c in unicodedata.normalize('NFD', s)
+            if unicodedata.category(c) != 'Mn'
+        )
 
-def tensors_from_lyrics(vocab, lyrics, max_seq_length):
-    src = []
-    trg = []
-    for sentence in lyrics:
-        src_indexes = idx_from_sent(vocab, sentence)
-        trg_indexes = idx_from_sent(vocab, sentence)
-        src_indexes.insert(0, vocab.word_to_idx['<sos>'])
-        src_indexes = pad(src_indexes, vocab.word_to_idx['<pad>'], max_seq_length)
-        trg_indexes.append(vocab.word_to_idx['<eos>'])
-        trg_indexes = pad(trg_indexes, vocab.word_to_idx['<pad>'], max_seq_length)
-        src.append(src_indexes)
-        trg.append(trg_indexes)
+    @staticmethod
+    def normalize_string(s):
+        s = s.lower().strip()
+        s = re.sub(r"([.!?,)])", r" \1", s)
+        s = re.sub(r"([¡¿(])", r"\1 ", s)
+        # s = re.sub(r"[^a-zA-Z.!?,)¡¿(]+", r" ", s)
+        return s
 
-    return src, trg
+    @staticmethod
+    def filter_lyric(lyric, max_len):
+        return len(lyric.split(' ')) < max_len
 
-
-def unicode_to_ascii(s):
-    return ''.join(
-        c for c in unicodedata.normalize('NFD', s)
-        if unicodedata.category(c) != 'Mn'
-    )
-
-
-def normalize_string(s):
-    s = s.lower().strip()
-    s = re.sub(r"([.!?,)])", r" \1", s)
-    s = re.sub(r"([¡¿(])", r"\1 ", s)
-    # s = re.sub(r"[^a-zA-Z.!?,)¡¿(]+", r" ", s)
-    return s
-
-
-def filter_lyric(lyric, max_len):
-    return len(lyric.split(' ')) < max_len
-
-
-def filter_lyrics(lyrics, max_len):
-    return [lyric for lyric in lyrics if filter_lyric(lyric, max_len)]
-
-
-def read_lyrics():
-    print("Reading lines...")
-
-    # Read the file and split into lines
-    lines = open('data/lyrics.txt', encoding='utf-8').read().strip().split('\n')
-
-    # print(lines)
-
-    sentences = [normalize_string(line) for line in lines]
-
-    processed_lyrics = filter_lyrics(sentences, 20)
-
-    src = Vocab()
-
-    for lyric in processed_lyrics:
-        src.add_sentence(lyric)
-
-    print("Counted words:")
-    print(src.n_words)
-
-    return src, processed_lyrics
+    @staticmethod
+    def filter_lyrics(lyrics, max_len):
+        return [lyric for lyric in lyrics if Vocab.filter_lyric(lyric, max_len)]
