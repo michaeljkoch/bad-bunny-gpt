@@ -49,15 +49,10 @@ def train(model, src_train, trg_train, optimizer, criterion):
         preds = preds.contiguous().view(-1, output_dim)
         trg = trg_train[i]
 
-        print(preds.size())
-        print(trg.size())
-
         # output = [batch size * trg len - 1, output dim]
         # trg = [batch size * trg len - 1]
 
         loss = criterion(preds, trg)
-
-        print(loss)
 
         loss.backward()
         optimizer.step()
