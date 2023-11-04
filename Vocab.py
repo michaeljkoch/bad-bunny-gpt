@@ -27,30 +27,28 @@ class Vocab:
         else:
             self.word_to_count[word] += 1
 
-    @staticmethod
-    def pad(seq, content, add_length):
-        seq.extend([content] * (add_length - len(seq)))
-        return seq
+    def idx_from_sent(self, sentence):
+        return [self.word_to_idx[word] for word in sentence.split(' ')]
 
-    @staticmethod
-    def idx_from_sent(lang, sentence):
-        return [lang.word_to_idx[word] for word in sentence.split(' ')]
-
-    @staticmethod
-    def tensors_from_lyrics(vocab, lyrics, max_seq_length):
+    def tensors_from_lyrics(self, lyrics, max_seq_length):
         src = []
         trg = []
         for sentence in lyrics:
-            src_indexes = Vocab.idx_from_sent(vocab, sentence)
-            trg_indexes = Vocab.idx_from_sent(vocab, sentence)
-            src_indexes.insert(0, vocab.word_to_idx['<sos>'])
-            src_indexes = Vocab.pad(src_indexes, vocab.word_to_idx['<pad>'], max_seq_length)
-            trg_indexes.append(vocab.word_to_idx['<eos>'])
-            trg_indexes = Vocab.pad(trg_indexes, vocab.word_to_idx['<pad>'], max_seq_length)
+            src_indexes = self.idx_from_sent(sentence)
+            trg_indexes = self.idx_from_sent(sentence)
+            src_indexes.insert(0, self.word_to_idx['<sos>'])
+            src_indexes = Vocab.pad(src_indexes, self.word_to_idx['<pad>'], max_seq_length)
+            trg_indexes.append(self.word_to_idx['<eos>'])
+            trg_indexes = Vocab.pad(trg_indexes, self.word_to_idx['<pad>'], max_seq_length)
             src.append(src_indexes)
             trg.append(trg_indexes)
 
         return src, trg
+
+    @staticmethod
+    def pad(seq, content, add_length):
+        seq.extend([content] * (add_length - len(seq)))
+        return seq
 
     @staticmethod
     def unicode_to_ascii(s):
