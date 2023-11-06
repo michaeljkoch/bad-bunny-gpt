@@ -37,9 +37,9 @@ class Vocab:
             src_indexes = self.idx_from_sent(sentence)
             trg_indexes = self.idx_from_sent(sentence)
             src_indexes.insert(0, self.word_to_idx['<sos>'])
-            src_indexes = Vocab.pad(src_indexes, self.word_to_idx['<pad>'], max_seq_length)
+            # src_indexes = Vocab.pad(src_indexes, self.word_to_idx['<pad>'], max_seq_length)
             trg_indexes.append(self.word_to_idx['<eos>'])
-            trg_indexes = Vocab.pad(trg_indexes, self.word_to_idx['<pad>'], max_seq_length)
+            # trg_indexes = Vocab.pad(trg_indexes, self.word_to_idx['<pad>'], max_seq_length)
             src.append(src_indexes)
             trg.append(trg_indexes)
 

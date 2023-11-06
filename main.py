@@ -36,18 +36,27 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
-def train(model, src_train, trg_train, optimizer, criterion):
+def train(voacb, model, src_train, trg_train, optimizer, criterion):
     model.train()
     epoch_loss = 0
 
     for i, src in enumerate(src_train):
+        src = torch.tensor(src)
+
         optimizer.zero_grad()
 
         preds = model(src.unsqueeze(0))
+        # print("preds:")
+        # print("\t", preds.size())
+
         output_dim = preds.shape[-1]
 
         preds = preds.contiguous().view(-1, output_dim)
-        trg = trg_train[i]
+        pred_idx = preds.argmax(1).tolist()
+        print(pred_idx)
+        pred_words = [vocab.idx_to_word[idx] for idx in pred_idx]
+        print(pred_words)
+        trg = torch.tensor(trg_train[i])
 
         # output = [batch size * trg len - 1, output dim]
         # trg = [batch size * trg len - 1]
@@ -73,13 +82,20 @@ if __name__ == "__main__":
     vocab, lyrics = read_lyrics()
 
     src, trg = vocab.tensors_from_lyrics(lyrics, 20)
+
     # print(round(len(src)*0.9))
     train_idx = random.sample(range(0, len(src)), round(len(src)*0.9))
+    print(train_idx)
     # print(train_idx)
-    src_train = torch.tensor([src[i] for i in train_idx])
-    trg_train = torch.tensor([trg[i] for i in train_idx])
-    src_test = torch.tensor([src[i] for i in range(len(src)) if i not in train_idx])
-    trg_test = torch.tensor([trg[i] for i in range(len(src)) if i not in train_idx])
+    # src_train = torch.tensor([src[i] for i in train_idx])
+    # trg_train = torch.tensor([trg[i] for i in train_idx])
+    # src_test = torch.tensor([src[i] for i in range(len(src)) if i not in train_idx])
+    # trg_test = torch.tensor([trg[i] for i in range(len(src)) if i not in train_idx])
+
+    src_train = [src[i] for i in train_idx]
+    trg_train = [trg[i] for i in train_idx]
+    src_test = [src[i] for i in range(len(src)) if i not in train_idx]
+    trg_test = [trg[i] for i in range(len(src)) if i not in train_idx]
 
     # check that target sent is shifted right for training
     # print(src[480])
@@ -92,7 +108,8 @@ if __name__ == "__main__":
     ff_dim = 64
     max_seq_len = 20
     LEARNING_RATE = 0.0005
-    N_EPOCHS = 1
+    N_EPOCHS = 10
+    BATCH_SIZE = 8
 
     model = Transformer(vocab_size, model_dim, num_heads, num_layers, ff_dim, max_seq_len, dr=0.9)
 
@@ -103,7 +120,7 @@ if __name__ == "__main__":
 
     for epoch in range(N_EPOCHS):
         start_time = time.time()
-        train_loss = train(model, src_train, trg_train, optimizer, criterion)
+        train_loss = train(vocab, model, src_train, trg_train, optimizer, criterion)
         end_time = time.time()
         epoch_mins, epoch_secs = epoch_time(start_time, end_time)
         print(f'Epoch: {epoch + 1:02} | Time: {epoch_mins}m {epoch_secs}s')
